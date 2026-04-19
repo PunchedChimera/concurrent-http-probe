@@ -2,8 +2,8 @@
 
 A lightweight CLI tool that fires concurrent HTTP requests against one or more endpoints and reports latency statistics, throughput, and error rates. Think a cut-down version of [hey](https://github.com/rakyll/hey) or [wrk](https://github.com/wg/wrk).
 
-[![CI](https://github.com/punchedchimera/concurrent-http-probe/actions/workflows/ci.yml/badge.svg)](https://github.com/punchedchimera/concurrent-http-probe/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/punchedchimera/concurrent-http-probe)](https://goreportcard.com/report/github.com/punchedchimera/concurrent-http-probe)
+[![CI](https://github.com/PunchedChimera/concurrent-http-probe/actions/workflows/ci.yml/badge.svg)](https://github.com/PunchedChimera/concurrent-http-probe/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/PunchedChimera/concurrent-http-probe)](https://goreportcard.com/report/github.com/PunchedChimera/concurrent-http-probe)
 
 ## Features
 
@@ -17,12 +17,12 @@ A lightweight CLI tool that fires concurrent HTTP requests against one or more e
 
 ## Installation
 
-**Pre-built binary** — download from the [Releases](https://github.com/punchedchimera/concurrent-http-probe/releases) page (Linux, macOS, Windows; amd64 + arm64).
+**Pre-built binary** — download from the [Releases](https://github.com/PunchedChimera/concurrent-http-probe/releases) page (Linux, macOS, Windows; amd64 + arm64).
 
 **From source** — requires Go 1.22+:
 
 ```bash
-go install github.com/punchedchimera/concurrent-http-probe/cmd/probe@latest
+go install github.com/PunchedChimera/concurrent-http-probe/cmd/probe@latest
 ```
 
 ## Usage
@@ -98,7 +98,7 @@ Probing [https://example.com] — 100 requests × 10 workers × 10s timeout...
 ## Building from source
 
 ```bash
-git clone https://github.com/punchedchimera/concurrent-http-probe.git
+git clone https://github.com/PunchedChimera/concurrent-http-probe.git
 cd concurrent-http-probe
 
 # Run tests

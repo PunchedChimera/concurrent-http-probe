@@ -45,7 +45,7 @@ changelog:
 
 release:
   github:
-    owner: punchedchimera           # update to your GitHub username
+    owner: PunchedChimera           # update to your GitHub username
     name: concurrent-http-probe
   draft: false
   prerelease: auto # tags like v1.0.0-rc1 are marked as pre-release automatically
