@@ -1,0 +1,120 @@
+# CI runs on every push and pull request.
+# GitHub Actions is free for public repos (unlimited minutes) and
+# free for private repos up to 2,000 minutes/month on the free tier.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs on the same branch when a new push arrives.
+# Saves CI minutes and keeps feedback fast.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Go ${{ matrix.go-version }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # Test on multiple OS + Go version combinations.
+      # fail-fast: false means all matrix jobs run even if one fails.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ["1.22", "1.23"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          # Cache the Go module download cache and build cache automatically.
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify go.sum is up to date
+        # This fails if someone edited go.mod without running 'go mod tidy'.
+        # Catches drift between declared deps and the lockfile (go.sum).
+        run: go mod verify
+
+      - name: go vet
+        # vet runs static analysis — catches real bugs that the compiler misses,
+        # like misuse of fmt.Printf format strings or unreachable code.
+        run: go vet ./...
+
+      - name: Test with race detector
+        # -race instruments all memory accesses and reports data races at runtime.
+        # It makes the binary ~5x slower but catches concurrency bugs that are
+        # otherwise near-impossible to reproduce. Always run it in CI.
+        # -coverprofile writes coverage data for the next step.
+        run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Check coverage gate (Linux only)
+        # We check coverage on one platform to avoid duplicating the gate.
+        # 'go tool cover' reads the profile and computes the percentage.
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.22'
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | tr -d '%')
+          echo "Coverage: ${COVERAGE}%"
+          # bc does floating point comparison in bash.
+          # Fail if coverage drops below 90% — adjust as needed.
+          if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+            echo "FAIL: coverage ${COVERAGE}% is below 90% threshold"
+            exit 1
+          fi
+
+      - name: Upload coverage to Codecov
+        # Codecov is free for public repos and shows coverage trends over time.
+        # Sign up at codecov.io, add CODECOV_TOKEN to repo secrets if private.
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.22'
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.out
+          fail_ci_if_error: false # don't fail CI if Codecov is down
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+      - name: golangci-lint
+        # golangci-lint runs many linters in parallel. Free for open source.
+        # Config is in .golangci.yml — if absent, uses sensible defaults.
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+      - name: Build
+        # -ldflags injects values into variables at link time.
+        # We embed the git commit SHA as the version for dev builds.
+        # goreleaser (release.yml) does the proper semver injection on tags.
+        run: |
+          go build \
+            -ldflags "-X main.Version=$(git rev-parse --short HEAD)" \
+            -o bin/probe \
+            ./cmd/probe
+      - name: Smoke test
+        run: ./bin/probe version

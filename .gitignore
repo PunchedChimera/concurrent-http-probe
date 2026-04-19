@@ -1,0 +1,19 @@
+# Compiled binary (go build outputs to the module root or ./bin by convention)
+/probe
+/bin/
+
+# Test coverage output
+coverage.out
+coverage.html
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# GoReleaser build artifacts
+dist/

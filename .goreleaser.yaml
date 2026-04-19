@@ -1,0 +1,51 @@
+# GoReleaser configuration — controls how cross-platform releases are built.
+# Run 'goreleaser release --snapshot --clean' locally to test without pushing a tag.
+# Docs: https://goreleaser.com/customization/
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+
+builds:
+  - id: probe
+    main: ./cmd/probe
+    binary: probe
+    # Build for Linux, macOS, and Windows across amd64 and arm64.
+    # goreleaser cross-compiles using Go's built-in cross-compilation support —
+    # no Docker or toolchain installation required.
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    # Inject the git tag as the version at link time.
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+    env:
+      - CGO_ENABLED=0 # statically linked — no runtime dependency on libc
+
+archives:
+  - id: probe
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip # zip for Windows, tar.gz for everything else
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge remote-tracking branch
+
+release:
+  github:
+    owner: punchedchimera           # update to your GitHub username
+    name: concurrent-http-probe
+  draft: false
+  prerelease: auto # tags like v1.0.0-rc1 are marked as pre-release automatically
