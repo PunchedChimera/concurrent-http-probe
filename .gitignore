@@ -15,5 +15,8 @@ Thumbs.db
 .vscode/
 *.swp
 
+# Claude Code local settings (machine-specific, not for the repo)
+.claude/settings.local.json
+
 # GoReleaser build artifacts
 dist/
