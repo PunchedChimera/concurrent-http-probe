@@ -75,11 +75,11 @@ func TestCalculate(t *testing.T) {
 				MaxLatency:    150 * ms,
 				MeanLatency:   100 * ms,
 				// Nearest-rank P50 of [50ms, 150ms]: ceil(0.5*2)=1 → index 0 → 50ms
-				P50:           50 * ms,
-				P95:           150 * ms,
-				P99:           150 * ms,
-				Duration:      2 * time.Second,
-				Throughput:    1.0,
+				P50:        50 * ms,
+				P95:        150 * ms,
+				P99:        150 * ms,
+				Duration:   2 * time.Second,
+				Throughput: 1.0,
 			},
 		},
 		{

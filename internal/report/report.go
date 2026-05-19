@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -16,8 +17,8 @@ import (
 
 // Options controls output behaviour.
 type Options struct {
-	JSON   bool // emit machine-readable JSON instead of the table
 	Writer io.Writer
+	JSON   bool // emit machine-readable JSON instead of the table
 }
 
 // Print writes the summary to w in the format specified by opts.
@@ -69,12 +70,11 @@ func printJSON(s stats.Summary, w io.Writer) {
 	j.LatencyMs.P99 = msf(s.P99)
 	j.LatencyMs.Max = msf(s.MaxLatency)
 
-	// json.MarshalIndent pretty-prints with 2-space indentation.
-	// The error is intentionally ignored here: marshalling a known struct
-	// with only primitive fields cannot fail.
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
-	_ = enc.Encode(j)
+	if err := enc.Encode(j); err != nil {
+		fmt.Fprintf(os.Stderr, "json encode: %v\n", err)
+	}
 }
 
 func printTable(s stats.Summary, urls []string, w io.Writer) {

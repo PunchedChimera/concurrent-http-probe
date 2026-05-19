@@ -171,8 +171,8 @@ func TestRun_Validation(t *testing.T) {
 	// Table-driven validation tests — each row exercises one invalid config.
 	tests := []struct {
 		name    string
-		cfg     probe.Config
 		wantErr string
+		cfg     probe.Config
 	}{
 		{
 			name:    "no URLs",
