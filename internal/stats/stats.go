@@ -18,10 +18,10 @@ import (
 // objects which are always references. We pass *Result (pointer) when we want
 // reference semantics, and Result (value) when copying is fine.
 type Result struct {
+	Error      error // nil means no error — errors are values, not exceptions
 	URL        string
-	StatusCode int
 	Latency    time.Duration // time.Duration is just an int64 of nanoseconds
-	Error      error         // nil means no error — errors are values, not exceptions
+	StatusCode int
 }
 
 // Summary holds aggregated statistics for a complete probe run.

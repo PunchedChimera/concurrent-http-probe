@@ -26,11 +26,11 @@ import (
 // Exported fields (uppercase) are set by the CLI layer.
 type Config struct {
 	URLs        []string
-	Requests    int           // total requests per URL
-	Concurrency int           // number of parallel workers
-	Timeout     time.Duration // per-request HTTP timeout
 	Method      string        // HTTP method: GET, POST, HEAD, etc.
 	Headers     []string      // raw "Key: Value" header strings
+	Timeout     time.Duration // per-request HTTP timeout
+	Requests    int           // total requests per URL
+	Concurrency int           // number of parallel workers
 	KeepAlive   bool          // reuse TCP connections (default true)
 }
 

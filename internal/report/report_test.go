@@ -40,7 +40,7 @@ func TestPrint_TableContainsKeyFields(t *testing.T) {
 		"100 total",
 		"95 OK",
 		"5 failed",
-		"5.00%",     // error rate
+		"5.00%",      // error rate
 		"9.50 req/s", // throughput
 		"P50",
 		"P95",
@@ -136,13 +136,13 @@ func TestFmtDuration_Ranges(t *testing.T) {
 	// We test fmtDuration indirectly through Print output.
 	// Sub-ms, ms-range, and s-range durations should all format correctly.
 	tests := []struct {
-		latency time.Duration
 		want    string
+		latency time.Duration
 	}{
-		{500 * time.Microsecond, "µs"},
-		{25 * time.Millisecond, "ms"},
-		{2 * time.Second, "s"},
-		{0, "N/A"},
+		{want: "µs", latency: 500 * time.Microsecond},
+		{want: "ms", latency: 25 * time.Millisecond},
+		{want: "s", latency: 2 * time.Second},
+		{want: "N/A"},
 	}
 
 	for _, tt := range tests {

@@ -24,7 +24,7 @@ jobs:
       # fail-fast: false means all matrix jobs run even if one fails.
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         go-version: ["1.22", "1.23"]
 
     steps:

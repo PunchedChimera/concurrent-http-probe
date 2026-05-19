@@ -1,6 +1,5 @@
 # golangci-lint configuration.
 # Full reference: https://golangci-lint.run/usage/linters/
-version: "2"
 
 linters:
   enable:
