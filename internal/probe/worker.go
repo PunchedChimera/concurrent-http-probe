@@ -61,12 +61,12 @@ func Run(ctx context.Context, cfg Config) ([]stats.Result, time.Duration, error)
 
 	totalJobs := len(cfg.URLs) * cfg.Requests
 
-	// Buffered channels decouple producer and consumer.
-	// A buffered channel of size N can hold N items without blocking the sender.
-	// An unbuffered channel (make(chan T)) blocks sender until receiver is ready.
-	// Java analogy: ArrayBlockingQueue vs SynchronousQueue.
-	jobs := make(chan job, totalJobs)
-	results := make(chan stats.Result, totalJobs)
+	// Bounded channel: holds at most 2× workers at a time, providing backpressure.
+	// This bounds memory to O(concurrency) regardless of totalJobs — critical when
+	// totalJobs can be millions (e.g. 1000 URLs × 10000 requests).
+	// Java analogy: ArrayBlockingQueue with a fixed capacity.
+	jobs := make(chan job, cfg.Concurrency*2)
+	results := make(chan stats.Result, cfg.Concurrency*2)
 
 	// sync.WaitGroup is the Go equivalent of Java's CountDownLatch.
 	// Add(n) sets the counter, Done() decrements, Wait() blocks until zero.
@@ -88,17 +88,22 @@ func Run(ctx context.Context, cfg Config) ([]stats.Result, time.Duration, error)
 
 	start := time.Now()
 
-	// Feed all jobs into the channel.
-	// Since jobs is buffered to totalJobs, this loop never blocks.
-	for _, u := range cfg.URLs {
-		for i := 0; i < cfg.Requests; i++ {
-			jobs <- job{url: u, requestID: i}
+	// Feed jobs from a goroutine so the bounded channel provides backpressure —
+	// the producer blocks when workers are saturated instead of pre-allocating
+	// all jobs in memory. Closing jobs signals workers to exit their range loop.
+	go func() {
+		for _, u := range cfg.URLs {
+			for i := 0; i < cfg.Requests; i++ {
+				select {
+				case <-ctx.Done():
+					close(jobs)
+					return
+				case jobs <- job{url: u, requestID: i}:
+				}
+			}
 		}
-	}
-	// Closing a channel signals "no more data" to all receivers.
-	// Workers' 'for j := range jobs' loops will exit when the channel is drained and closed.
-	// This is the idiomatic Go shutdown signal — never close from the receiver side.
-	close(jobs)
+		close(jobs)
+	}()
 
 	// Wait for all workers to finish, then close results so the collector below can drain it.
 	// We do this in a goroutine so we don't block here — we need to drain results concurrently.
@@ -109,7 +114,7 @@ func Run(ctx context.Context, cfg Config) ([]stats.Result, time.Duration, error)
 
 	// Collect all results from the channel.
 	// 'for r := range results' reads until the channel is closed and empty.
-	collected := make([]stats.Result, 0, totalJobs)
+	collected := make([]stats.Result, 0, totalJobs) // capacity hint avoids repeated reallocation
 	for r := range results {
 		collected = append(collected, r)
 	}
